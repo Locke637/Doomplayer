@@ -361,7 +361,7 @@ class PPO(PPOBase):
         batch_size = 40
         screens, action_ph, returns, prev_actions, variables, non_terminal = self.buffer.sample(batch_size)
         buffersize = self.buffer.get_buffersize()
-        alp = 0.5
+        alp = 0.7
         self.model.train()
 
         for batch in range(4):
