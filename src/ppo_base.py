@@ -72,7 +72,7 @@ class PPOBase:
             game_status = np.zeros(args.batch_size)
             rarebuffer.append(lastrarenum)
             # print(rarebuffer)
-            rarenum = np.sum(rarebuffer[-100:],axis=0)
+            rarenum = np.sum(rarebuffer[-200:],axis=0)
             # print(rarebuffer[-2:])
             lastrarenum = np.zeros(8)
             # print(rarenum)
