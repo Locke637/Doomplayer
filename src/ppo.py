@@ -392,7 +392,7 @@ class PPO(PPOBase):
             output = actions_loss(action_pred, action_ph.squeeze())
             # actions_loss = torch.nn.CrossEntropyLoss(action_pred, action_ph)
 
-            loss = 0.5*(value_loss + alp*output)
+            loss = value_loss + alp*output  # loss for sil
 
             loss.backward()
             nn.utils.clip_grad_norm_(self.model.parameters(), 1)
