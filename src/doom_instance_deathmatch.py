@@ -45,7 +45,7 @@ class DoomInstanceDeathmatch(DoomInstance):
         a = action.item()
         if rarenum[a] == 0:
             rarenum[a] = 1
-        actreward = 40*50/rarenum[a]
+        actreward = 2*40*50/rarenum[a]
         # print(actreward)
         return actreward
 
