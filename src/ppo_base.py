@@ -39,6 +39,7 @@ class PPOBase:
         terminal = torch.Tensor(args.batch_size, 1)
         episode_return = torch.zeros(args.batch_size)
         action = torch.zeros(args.batch_size, 1, dtype=torch.long, device=device)
+        sil_loss = 0
 
         games = []
         if "oblige" in args.vizdoom_config:
@@ -99,6 +100,7 @@ class PPOBase:
                         if ret == 0:
                             game_status[idx] = 1
                         policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
+
                         # pick a new game
                         #with episode_games_lock:
                         #    episode_games[idx] = random_game_pool.pop(-1)
@@ -113,16 +115,24 @@ class PPOBase:
 
             # update model
             policy.set_last_state(state, action)
-            grads_norm, weights_norm, ppo_loss = policy.backward()
+            grads_norm, weights_norm, ppo_loss = policy.backward(episode)
+            buffer_size = policy.buffer.get_buffersize()
             # SIL update
-            policy.set_last_state(state, action)
-            grads_norm, weights_norm, sil_loss, buffer_size = policy.silbackward()
+            if episode > 500:
+                policy.set_last_state(state, action)
+                grads_norm, weights_norm, sil_loss, buffer_size = policy.silbackward()
 
 
             if episode % 1 == 0:
                 mean_return = episode_return.mean()
                 finished_counter = game_status.sum()
-                print(Fore.GREEN + "{}: mean_return = {:f}, finished={}, grads_norm = {:f}, weights_norm = {:f}, batch_time = {:.3f}, sil_loss = {:f}, buffer_size = {:f}".format(episode, mean_return, finished_counter, grads_norm, weights_norm, time.time()-batch_time, sil_loss, buffer_size) + Style.RESET_ALL)
+                if sil_loss:
+                    print(Fore.GREEN + "{}: mean_return = {:f}, finished={}, grads_norm = {:f}, weights_norm = {:f}, batch_time = {:.3f}, sil_loss = {:f}, buffer_size = {:f}".format(episode, mean_return, finished_counter, grads_norm, weights_norm, time.time()-batch_time, sil_loss, buffer_size) + Style.RESET_ALL)
+                else:
+                    print(
+                        Fore.BLUE + "{}: mean_return = {:f}, finished={}, grads_norm = {:f}, weights_norm = {:f}, batch_time = {:.3f}, sil_loss = {:f}, buffer_size = {:f}".format(
+                            episode, mean_return, finished_counter, grads_norm, weights_norm, time.time() - batch_time,
+                            0, buffer_size) + Style.RESET_ALL)
                 # tensorboard
                 train_writer.add_scalar('ppo/mean_return', mean_return, episode)
                 train_writer.add_scalar('ppo/finished', finished_counter, episode)

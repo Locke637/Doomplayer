@@ -277,7 +277,7 @@ class PPO(PPOBase):
         self.non_terminals.append(non_terminal)
         self.non_terminal = non_terminal
 
-    def backward(self):
+    def backward(self, epi):
         rewards = self.rewards
         episode_steps = self.steps
         non_terminals = self.non_terminals
@@ -347,8 +347,9 @@ class PPO(PPOBase):
             self.optimizer.zero_grad()
 
         # reset state
-        # self.cells = saved_cells
-        # self.reset()
+        if epi < 500:
+            self.cells = saved_cells
+            self.reset()
 
         return grads_norm, weights_norm, loss
 
@@ -358,7 +359,7 @@ class PPO(PPOBase):
         # episode_steps = self.steps
         # non_terminals = self.non_terminals
         saved_cells = self.cells.clone()
-        batch_size = 40
+        batch_size = 64
         screens, action_ph, returns, prev_actions, variables, non_terminal = self.buffer.sample(batch_size)
         buffersize = self.buffer.get_buffersize()
         alp = 0.5
@@ -444,7 +445,7 @@ class PPO(PPOBase):
         positive_reward = False
         if self.fillnum < 1:
             for (ob, a, r, _, _, _) in trajectory:
-                if r > 0:
+                if r > 10:
                     positive_reward = True
                     self.fillnum += 1
                     break
