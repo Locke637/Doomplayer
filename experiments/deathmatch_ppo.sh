@@ -16,7 +16,7 @@ then
     python $BASEDIR/src/main.py \
     --mode train \
     --episode_size 32 \
-    --batch_size 16 \
+    --batch_size 10 \
     --episode_discount 0.95 \
     --model $MODEL \
     --doom_instance $INSTANCE \
@@ -31,7 +31,7 @@ then
     python $BASEDIR/src/main.py \
     --mode train \
     --episode_size 32 \
-    --batch_size 16 \
+    --batch_size 10 \
     --episode_discount 0.95 \
     --model $MODEL \
     --load $CHECK_POINT \

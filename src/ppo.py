@@ -359,7 +359,7 @@ class PPO(PPOBase):
         # episode_steps = self.steps
         # non_terminals = self.non_terminals
         saved_cells = self.cells.clone()
-        batch_size = 64
+        batch_size = 20
         screens, action_ph, returns, prev_actions, variables, non_terminal = self.buffer.sample(batch_size)
         buffersize = self.buffer.get_buffersize()
         alp = 0.5

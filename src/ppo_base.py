@@ -118,7 +118,7 @@ class PPOBase:
             grads_norm, weights_norm, ppo_loss = policy.backward(episode)
             buffer_size = policy.buffer.get_buffersize()
             # SIL update
-            if episode > 500:
+            if episode >= 500:
                 policy.set_last_state(state, action)
                 grads_norm, weights_norm, sil_loss, buffer_size = policy.silbackward()
 
