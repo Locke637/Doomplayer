@@ -445,12 +445,12 @@ class PPO(PPOBase):
         positive_reward = False
         if self.fillnum < 1:
             for (ob, a, r, _, _, _) in trajectory:
-                if r > 10:
+                if r > 5:
                     positive_reward = True
                     self.fillnum += 1
                     break
         for (ob, a, r, _, _ ,_ ) in trajectory:
-            if r > 10:
+            if r > 5:
                 positive_reward = True
                 break
         if positive_reward:

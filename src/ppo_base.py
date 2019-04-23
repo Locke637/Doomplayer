@@ -99,7 +99,7 @@ class PPOBase:
                         action[idx] = 0
                         if ret == 0:
                             game_status[idx] = 1
-                        policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
+                        # policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
 
                         # pick a new game
                         #with episode_games_lock:
@@ -108,9 +108,10 @@ class PPOBase:
                     else:
                         non_terminal[idx] = 1
                         terminal[idx,0] = 0
-                        policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
+                        # policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
                 pool.map(step_game, games)
                 policy.set_reward(reward)
+                policy.sil_step(state.screen, action, reward, prev_action, state.variables, terminal)
                 policy.set_non_terminal(non_terminal)
 
             # update model
