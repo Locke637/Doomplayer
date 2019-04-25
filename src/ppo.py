@@ -360,66 +360,71 @@ class PPO(PPOBase):
         # non_terminals = self.non_terminals
         saved_cells = self.cells.clone()
         batch_size = 20
-        screens, action_ph, returns, prev_actions, variables, non_terminal = self.buffer.sample(batch_size)
         buffersize = self.buffer.get_buffersize()
-        alp = 0.5
-        self.model.train()
+        if buffersize > batch_size:
+            screens, action_ph, returns, prev_actions, variables, non_terminal = self.buffer.sample(batch_size)
+            buffersize = self.buffer.get_buffersize()
+            alp = 0.5
+            self.model.train()
 
-        for batch in range(4):
-            self.cells = self.init_cells.clone()
-            # compute an action
-            # print(screens.size())
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            screens = screens.to(device)
-            variables = variables.to(device)
-            prev_actions = prev_actions.to(device)
-            non_terminal = non_terminal.to(device)
+            for batch in range(4):
+                self.cells = self.init_cells.clone()
+                # compute an action
+                # print(screens.size())
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                screens = screens.to(device)
+                variables = variables.to(device)
+                prev_actions = prev_actions.to(device)
+                non_terminal = non_terminal.to(device)
 
-            action_pred, value = self.get_sil_action_value(screens, variables, prev_actions, non_terminal)
+                action_pred, value = self.get_sil_action_value(screens, variables, prev_actions, non_terminal)
 
-            value = value.type(torch.FloatTensor)
-            value_loss = F.smooth_l1_loss(returns.view(-1, 1), value)
-            # print(action_pred.type(),action_pred.size())
-            # print(action_ph.type(),action_ph.size())
+                value = value.type(torch.FloatTensor)
+                value_loss = F.smooth_l1_loss(returns.view(-1, 1), value)
+                # print(action_pred.type(),action_pred.size())
+                # print(action_ph.type(),action_ph.size())
 
-            action_pred = torch.zeros(action_pred.shape[0], self.button_num, device=device).scatter(-1,
-                                                                                                    action_pred.long(),
-                                                                                                    1)
-            # action_ph = action_ph.type(torch.LongTensor)
+                action_pred = torch.zeros(action_pred.shape[0], self.button_num, device=device).scatter(-1,
+                                                                                                        action_pred.long(),
+                                                                                                        1)
+                # action_ph = action_ph.type(torch.LongTensor)
 
-            # print(action_pred.type(),action_pred.size())
-            # print(action_ph.squeeze().type(),action_ph.squeeze().size())
-            actions_loss = nn.CrossEntropyLoss()
-            output = actions_loss(action_pred, action_ph.squeeze())
-            # actions_loss = torch.nn.CrossEntropyLoss(action_pred, action_ph)
+                # print(action_pred.type(),action_pred.size())
+                # print(action_ph.squeeze().type(),action_ph.squeeze().size())
+                actions_loss = nn.CrossEntropyLoss()
+                output = actions_loss(action_pred, action_ph.squeeze())
+                # actions_loss = torch.nn.CrossEntropyLoss(action_pred, action_ph)
 
-            loss = value_loss + alp*output  # loss for sil
+                loss = value_loss + alp*output  # loss for sil
 
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), 1)
+                loss.backward()
+                nn.utils.clip_grad_norm_(self.model.parameters(), 1)
 
-            grads = []
-            weights = []
-            for p in self.model.parameters():
-                if p.grad is not None:
-                    grads.append(p.grad.view(-1))
-                    weights.append(p.view(-1))
-            grads = torch.cat(grads, 0)
-            weights = torch.cat(weights, 0)
-            grads_norm = grads.norm()
-            weights_norm = weights.norm()
+                grads = []
+                weights = []
+                for p in self.model.parameters():
+                    if p.grad is not None:
+                        grads.append(p.grad.view(-1))
+                        weights.append(p.view(-1))
+                grads = torch.cat(grads, 0)
+                weights = torch.cat(weights, 0)
+                grads_norm = grads.norm()
+                weights_norm = weights.norm()
 
-            # check for NaN
-            assert grads_norm == grads_norm
+                # check for NaN
+                assert grads_norm == grads_norm
 
-            self.optimizer.step()
-            self.optimizer.zero_grad()
+                self.optimizer.step()
+                self.optimizer.zero_grad()
 
         # reset state
         self.cells = saved_cells
         self.reset()
 
-        return grads_norm, weights_norm, loss, buffersize
+        if grads_norm:
+            return grads_norm, weights_norm, loss, buffersize
+        else:
+            return 0, 0, 0, buffersize
 
     def train(self):
         self.model.train()
@@ -445,12 +450,12 @@ class PPO(PPOBase):
         positive_reward = False
         if self.fillnum < 1:
             for (ob, a, r, _, _, _) in trajectory:
-                if r > 5:
+                if r > 10:
                     positive_reward = True
                     self.fillnum += 1
                     break
         for (ob, a, r, _, _ ,_ ) in trajectory:
-            if r > 5:
+            if r > 10:
                 positive_reward = True
                 break
         if positive_reward:

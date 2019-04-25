@@ -15,8 +15,8 @@ if [ $COMMAND == 'train' ]
 then
     python $BASEDIR/src/main.py \
     --mode train \
-    --episode_size 32 \
-    --batch_size 10 \
+    --episode_size 64 \
+    --batch_size 5 \
     --episode_discount 0.95 \
     --model $MODEL \
     --doom_instance $INSTANCE \
@@ -30,8 +30,8 @@ elif [ $COMMAND == 'resume' ]
 then
     python $BASEDIR/src/main.py \
     --mode train \
-    --episode_size 32 \
-    --batch_size 10 \
+    --episode_size 64 \
+    --batch_size 5 \
     --episode_discount 0.95 \
     --model $MODEL \
     --load $CHECK_POINT \
